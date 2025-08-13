@@ -3,8 +3,26 @@ name = "angry_bevys"
 version = "0.1.0"
 edition = "2024"
 
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+
 [dependencies]
 avian2d = "0.3.1"
-bevy = { version = "0.16.1", features = ["default_font"] }
+bevy = { version = "0.16.1", default-features = false, features = [
+    "bevy_audio",
+    "bevy_text",
+    "bevy_winit",
+    "bevy_asset",
+    "bevy_sprite",
+    "bevy_ui",
+    "bevy_ui_picking_backend",
+    "vorbis",
+    "webgl2",
+    "x11",
+    "png",
+    "default_font",
+] }
 bevy_asset_loader = "0.23.0"
-bevy_egui = "0.36.0"
+# bevy_egui = "0.36.0"

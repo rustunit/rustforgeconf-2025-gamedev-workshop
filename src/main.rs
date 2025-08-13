@@ -5,7 +5,6 @@ mod splash_screen;
 
 use avian2d::prelude::*;
 use bevy::{prelude::*, window::WindowResolution};
-use bevy_egui::EguiPlugin;
 
 use crate::loading::LoadingPlugin;
 
@@ -43,9 +42,9 @@ fn main() {
             }),
     );
 
-    if !app.is_plugin_added::<EguiPlugin>() {
-        app.add_plugins(EguiPlugin::default());
-    }
+    // if !app.is_plugin_added::<EguiPlugin>() {
+    //     app.add_plugins(EguiPlugin::default());
+    // }
 
     app.init_state::<GameState>();
     app.insert_resource(Gravity(Vec2::NEG_Y * 9.81 * 50.0));

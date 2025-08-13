@@ -1,0 +1,107 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: ["*"]
+
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+jobs:
+  wasm:
+    permissions:
+      pull-requests: write
+      deployments: write
+      contents: read
+    runs-on: [self-hosted, linux]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+          targets: wasm32-unknown-unknown
+
+      - uses: leafwing-studios/cargo-cache@v2
+        with:
+          sweep-cache: true
+
+      - name: Install alsa and udev
+        run: sudo apt-get update; sudo apt-get install -y --no-install-recommends libasound2-dev libudev-dev
+
+      - name: Install trunk
+        uses: jetli/trunk-action@v0.4.0
+        with:
+          version: "latest"
+
+      - name: Build
+        run: trunk build --release
+
+      - name: Install Vercel CLI
+        run: |
+          curl -fsSL https://deb.nodesource.com/setup_23.x -o nodesource_setup.sh
+          sudo -E bash nodesource_setup.sh
+          sudo apt-get install -y nodejs
+          node -v
+          npm -v
+          sudo npm install --global vercel@latest
+          vercel -v
+
+      - name: Pull Vercel Environment Information
+        run: vercel pull --yes --environment=${{ github.event_name == 'push' && 'production' || 'preview' }} --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy to Vercel
+        id: deploy
+        run: |
+          DEPLOYMENT_URL=$(vercel deploy dist ${{ github.event_name == 'push' && '--prod' || '' }} --token ${{ secrets.VERCEL_TOKEN }})
+          echo "deployment: $DEPLOYMENT_URL"
+          echo "deployment_url=$DEPLOYMENT_URL" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Deployment
+        id: github_deployment
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const deployment = await github.rest.repos.createDeployment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: context.sha,
+              environment: ${{ github.event_name == 'push' && '"Production"' || '"Preview"' }},
+              auto_merge: false,
+              required_contexts: [],
+              production_environment: ${{ github.event_name == 'push' }}
+            });
+            return deployment.data.id;
+
+      - name: Update GitHub Deployment Status
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const success = ${{ steps.deploy.outcome == 'success' }};
+            await github.rest.repos.createDeploymentStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              deployment_id: ${{ steps.github_deployment.outputs.result }},
+              state: success ? 'success' : 'failure',
+              environment: ${{ github.event_name == 'push' && '"Production"' || '"Preview"' }},
+              environment_url: '${{ steps.deploy.outputs.deployment_url }}',
+              log_url: '${{ steps.deploy.outputs.deployment_url }}',
+              description: success ? 'Deployment succeeded' : 'Deployment failed',
+              auto_inactive: true
+            });
+
+      - uses: phulsechinmay/rewritable-pr-comment@v0.3.0
+        if: github.event_name == 'pull_request'
+        with:
+          message: |
+            Deployed to Vercel.
+
+            <table>
+              <tr>
+                <td><strong>✅ Preview:</strong></td>
+                <td><a href='${{ steps.deploy.outputs.deployment_url }}'>${{ steps.deploy.outputs.deployment_url }}</a></td>
+              </tr>
+            </table>
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COMMENT_IDENTIFIER: "vercel-deploy"

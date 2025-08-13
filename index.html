@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+  <title>Angry Bevys</title>
+  <link data-trunk rel="copy-dir" href="./assets/" />
+  <link data-trunk rel="inline" href="build/web/styles.css" />
+
+  <script>
+    // TODO: make this a crate using web_sys
+    window.onload = function () {
+      document.getElementById('bevy').addEventListener('touchstart', function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+      }, false);
+
+      document.getElementById('bevy').oncontextmenu = function (event) {
+        event.preventDefault();
+        event.stopPropagation(); // not necessary in my case, could leave in case stopImmediateProp isn't available?
+        event.stopImmediatePropagation();
+        return false;
+      };
+    };
+  </script>
+</head>
+
+<body>
+  <link data-trunk rel="rust" href="Cargo.toml" data-wasm-opt="z" data-bin="angry_bevys"
+    data-cargo-no-default-features="true" />
+  <link data-trunk rel="inline" href="build/web/sound.js" />
+
+  <div class="game-container">
+    <div class="lds-dual-ring"></div>
+    <canvas id="bevy">
+      Javascript and support for canvas is required
+    </canvas>
+  </div>
+</body>
+
+</html>

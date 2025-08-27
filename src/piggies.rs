@@ -48,5 +48,5 @@ fn on_piggy_collision(
 ) {
     let target = trigger.target();
     commands.entity(target).despawn();
-    piggies.pigs -= 1;
+    piggies.pigs = piggies.pigs.saturating_sub(1);
 }

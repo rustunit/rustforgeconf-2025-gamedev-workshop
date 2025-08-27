@@ -6,6 +6,7 @@ mod piggies;
 mod piggies_ui;
 mod sling;
 mod splash_screen;
+mod bomb;
 
 use avian2d::prelude::*;
 use bevy::{prelude::*, window::WindowResolution};
@@ -73,6 +74,7 @@ fn main() {
         back_button::plugin,
         piggies::plugin,
         piggies_ui::plugin,
+        bomb::plugin,
     ));
 
     // this runs the game

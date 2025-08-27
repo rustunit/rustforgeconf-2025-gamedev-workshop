@@ -4,6 +4,7 @@ use avian2d::prelude::*;
 use bevy::prelude::*;
 
 use crate::{GameState, loading::GameAssets, piggies::PiggySpawn};
+use crate::bomb::BombSpawn;
 
 pub fn plugin(app: &mut App) {
     app.add_systems(OnEnter(GameState::Playing), setup);
@@ -53,6 +54,10 @@ fn setup(mut commands: Commands, assets: Res<GameAssets>) {
         Vec2::new(450., -130.),
     ];
 
+    let bombs = vec![
+        Vec2::new(300.0, -130.0),
+    ];
+
     for b in boxes {
         commands.spawn((
             Name::new("box"),
@@ -60,6 +65,7 @@ fn setup(mut commands: Commands, assets: Res<GameAssets>) {
             Transform::from_translation(Vec3::new(b.x, b.y, 0.)),
             RigidBody::Dynamic,
             Collider::rectangle(40., 40.),
+            ExternalImpulse::new(Vec2::new(0.0, 0.0)),
             children![(
                 Transform::from_scale(Vec3::new(0.3, 0.3, 1.)),
                 Sprite::from_image(assets.kiste.clone()),
@@ -80,4 +86,5 @@ fn setup(mut commands: Commands, assets: Res<GameAssets>) {
     ));
 
     commands.trigger(PiggySpawn(piggies));
+    commands.trigger(BombSpawn(bombs));
 }

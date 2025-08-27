@@ -11,6 +11,7 @@ mod splash_screen;
 
 use avian2d::prelude::*;
 use bevy::{prelude::*, window::WindowResolution};
+use bevy_ui_anchor::AnchorUiPlugin;
 
 use crate::loading::LoadingPlugin;
 
@@ -30,6 +31,7 @@ enum GameState {
     SplashScreen,
     Playing,
 }
+
 
 /// The entry function of our game
 fn main() {
@@ -59,6 +61,7 @@ fn main() {
     // register physics plugins
     app.add_plugins(PhysicsPlugins::default());
     app.add_plugins(PhysicsDebugPlugin::default());
+    app.add_plugins(AnchorUiPlugin::<MainCamera>::new());
 
     app.init_state::<GameState>();
 

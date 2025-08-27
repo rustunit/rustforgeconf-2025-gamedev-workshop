@@ -3,8 +3,9 @@
 /// This way we can worry about seperating working on the trajectory visualizing and the sling shot input mechanics.
 use avian2d::prelude::*;
 use bevy::prelude::*;
+use bevy_ui_anchor::{AnchorPoint, AnchorUiConfig, AnchoredUiNodes};
 
-use crate::{GameState, birdies::BirdResources, loading::GameAssets};
+use crate::{GameState, birdies::BirdResources, birdies_ui::BirdyUI, loading::GameAssets};
 
 #[derive(Resource)]
 struct Sling {
@@ -40,6 +41,28 @@ fn setup(mut commands: Commands, sling: Res<Sling>, assets: Res<GameAssets>) {
             Transform::from_scale(Vec3::new(0.2, 0.2, 1.)),
             Sprite::from_image(assets.bevy.clone()),
         )],
+        AnchoredUiNodes::spawn_one((
+            AnchorUiConfig {
+                anchorpoint: AnchorPoint::middle(),
+                offset: Some(Vec3::new(0.0, 50., 0.0)),
+                ..Default::default()
+            },
+            Node {
+                border: UiRect::all(Val::Px(2.)),
+                ..Default::default()
+            },
+            BorderRadius::all(Val::Px(2.)),
+            Outline::default(),
+            Children::spawn_one((
+                BirdyUI,
+                Text::new("Birds: 3".to_string()),
+                TextFont {
+                    font_size: 20.0,
+                    ..Default::default()
+                },
+                TextLayout::new_with_justify(JustifyText::Right).with_no_wrap(),
+            )),
+        )),
     ));
 }
 

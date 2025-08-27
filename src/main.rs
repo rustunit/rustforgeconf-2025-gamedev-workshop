@@ -1,5 +1,7 @@
 mod back_button;
 mod background;
+mod birdies;
+mod birdies_ui;
 mod level;
 mod loading;
 mod piggies;
@@ -9,6 +11,7 @@ mod splash_screen;
 
 use avian2d::prelude::*;
 use bevy::{prelude::*, window::WindowResolution};
+use bevy_ui_anchor::AnchorUiPlugin;
 
 use crate::loading::LoadingPlugin;
 
@@ -28,6 +31,7 @@ enum GameState {
     SplashScreen,
     Playing,
 }
+
 
 /// The entry function of our game
 fn main() {
@@ -57,6 +61,7 @@ fn main() {
     // register physics plugins
     app.add_plugins(PhysicsPlugins::default());
     app.add_plugins(PhysicsDebugPlugin::default());
+    app.add_plugins(AnchorUiPlugin::<MainCamera>::new());
 
     app.init_state::<GameState>();
 
@@ -70,6 +75,8 @@ fn main() {
         level::plugin,
         sling::plugin,
         background::plugin,
+        birdies::plugin,
+        birdies_ui::plugin,
         back_button::plugin,
         piggies::plugin,
         piggies_ui::plugin,

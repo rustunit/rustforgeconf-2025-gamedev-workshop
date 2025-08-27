@@ -153,6 +153,7 @@ dependencies = [
  "avian2d",
  "bevy",
  "bevy_asset_loader",
+ "bevy_ui_anchor",
 ]
 
 [[package]]
@@ -1219,6 +1220,15 @@ dependencies = [
  "taffy",
  "thiserror 2.0.12",
  "tracing",
+]
+
+[[package]]
+name = "bevy_ui_anchor"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3f7d8b918acc90bb96f5143d1e32bb129a28e3ced4ded71308a8e33e7e2d1c3c"
+dependencies = [
+ "bevy",
 ]
 
 [[package]]

@@ -4,7 +4,7 @@
 use avian2d::prelude::*;
 use bevy::prelude::*;
 
-use crate::{GameState, loading::GameAssets};
+use crate::{GameState, birdies::BirdResources, loading::GameAssets};
 
 #[derive(Resource)]
 struct Sling {
@@ -13,7 +13,7 @@ struct Sling {
 }
 
 #[derive(Event)]
-struct OnShoot;
+pub struct OnShoot;
 
 pub fn plugin(app: &mut App) {
     app.insert_resource(Sling {
@@ -60,17 +60,22 @@ fn on_shoot(
     mut commands: Commands,
     assets: Res<GameAssets>,
     sling: Res<Sling>,
+    mut birds: ResMut<BirdResources>,
 ) {
-    commands.spawn((
-        Name::new("bird"),
-        StateScoped(GameState::Playing),
-        Transform::from_translation(sling.pos.extend(0.)),
-        RigidBody::Dynamic,
-        LinearVelocity(sling.velocity),
-        Collider::circle(20.),
-        children![(
-            Transform::from_scale(Vec3::new(0.2, 0.2, 1.)),
-            Sprite::from_image(assets.bevy.clone()),
-        )],
-    ));
+    if birds.birds_spawned < birds.birds {
+        birds.birds_spawned += 1;
+
+        commands.spawn((
+            Name::new("bird"),
+            StateScoped(GameState::Playing),
+            Transform::from_translation(sling.pos.extend(0.)),
+            RigidBody::Dynamic,
+            LinearVelocity(sling.velocity),
+            Collider::circle(20.),
+            children![(
+                Transform::from_scale(Vec3::new(0.2, 0.2, 1.)),
+                Sprite::from_image(assets.bevy.clone()),
+            )],
+        ));
+    }
 }

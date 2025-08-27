@@ -1,5 +1,7 @@
 mod back_button;
 mod background;
+mod birdies;
+mod birdies_ui;
 mod level;
 mod loading;
 mod piggies;
@@ -70,6 +72,8 @@ fn main() {
         level::plugin,
         sling::plugin,
         background::plugin,
+        birdies::plugin,
+        birdies_ui::plugin,
         back_button::plugin,
         piggies::plugin,
         piggies_ui::plugin,

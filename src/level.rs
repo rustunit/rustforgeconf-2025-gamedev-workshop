@@ -79,6 +79,7 @@ fn setup(mut commands: Commands, assets: Res<GameAssets>) {
         Transform::from_translation(Vec3::new(50., 50., 0.)),
         RigidBody::Dynamic,
         Collider::triangle(Vec2::new(-80., 0.), Vec2::new(0., 80.), Vec2::new(80., 0.)),
+        ExternalImpulse::new(Vec2::new(0.0, 0.0)),
         children![(
             Transform::from_scale(Vec3::new(1.1, 1.1, 1.)).with_translation(Vec3::new(0., 40., 0.)),
             Sprite::from_image(assets.roof.clone()),

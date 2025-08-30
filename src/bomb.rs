@@ -1,8 +1,8 @@
+use crate::{GameState, loading::GameAssets};
 /// This define the plugin handling the bomb behaviour: spawning, getting hit, exploding, despawning
 use avian2d::prelude::*;
+use bevy::prelude::ops::log10;
 use bevy::prelude::*;
-
-use crate::{GameState, loading::GameAssets};
 
 #[derive(Event, Debug, Clone)]
 pub struct BombSpawn(pub Vec<Vec2>);
@@ -21,7 +21,6 @@ fn on_spawn(trigger: Trigger<BombSpawn>, mut commands: Commands, assets: Res<Gam
                 Sensor,
                 Collider::rectangle(30., 30.),
                 CollisionEventsEnabled,
-                ExternalImpulse::new(Vec2::new(0.0, 0.0)),  // TODO: remove this
                 children![(
                     Transform::from_scale(Vec3::new(0.5, 0.5, 1.)),
                     Sprite::from_image(assets.bomb.clone()),
@@ -34,14 +33,17 @@ fn on_spawn(trigger: Trigger<BombSpawn>, mut commands: Commands, assets: Res<Gam
 fn on_bomb_collision(
     trigger: Trigger<OnCollisionStart>,
     spatial_query: SpatialQuery,
-    mut query: Query<(&Transform, &mut ExternalImpulse)>,
+    bomb_query: Query<&Transform>,
+    mut target_query: Query<(&Transform, &mut ExternalImpulse)>,
     mut commands: Commands,
 ) {
     let target = trigger.target();
 
+    let r = 100.0;
+
     // Shape properties
-    if let Ok((origin, _)) = query.get(target) {
-        let shape = Collider::circle(50.0);
+    if let Ok(origin) = bomb_query.get(target) {
+        let shape = Collider::circle(r);
         let rotation = 0.0;
         let direction = Dir2::X;
 
@@ -50,17 +52,64 @@ fn on_bomb_collision(
         let filter = SpatialQueryFilter::default();
 
         // Cast shape and get up to 20 hits
-        let hits = spatial_query.shape_hits(&shape, origin.translation.truncate(), rotation, direction, 100, &config, &filter);
+        let hits = spatial_query.shape_hits(
+            &shape,
+            origin.translation.truncate(),
+            rotation,
+            direction,
+            100,
+            &config,
+            &filter,
+        );
 
         // Print hits
         for hit in hits.iter() {
             info!("Hit: {:?}", hit);
 
-            if let Ok(mut x) = query.get_mut(hit.entity) {
-                info!("BAR");
-                x.1.apply_impulse(Vec2::new(0.0, 1000.0));
+            if let Ok((t, mut ei)) = target_query.get_mut(hit.entity) {
+                let imp = calculate_impulse(origin, t, r) * 5_000_000.0;
+                ei.apply_impulse(imp);
             }
         }
     }
     commands.entity(target).despawn();
+}
+
+fn calculate_impulse(o: &Transform, t: &Transform, radius: f32) -> Vec2 {
+    info!("origin={o:?}, t={t:?}");
+
+    let v = (t.translation - o.translation).truncate();
+    info!("v1={v:?}");
+
+    let v = v / radius;
+    let v = v.clamp_length_min(0.0);
+    let v = v.clamp_length_max(1.0);
+    //let d = v.length();
+
+    // when |v| == 1, we want 0 force
+    // when |v| == 0, we want max force
+    let v_norm = v.normalize();
+    let v = v_norm - v;
+
+    //info!("v={v:?}, d={d:?}");
+    info!("v2={v:?}");
+
+    let d = 0.5 * log10(1.0 - v.length()) + 1.0;
+    info!("d={d:?}");
+
+    v * d
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_calculate_impulse() {
+        dbg!(calculate_impulse(
+            &Transform::from_translation(Vec3::new(0.0, 0.0, 0.0)),
+            &Transform::from_translation(Vec3::new(1.0, 1.0, 0.0)),
+            1.0
+        ));
+    }
 }

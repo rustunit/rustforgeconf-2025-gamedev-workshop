@@ -4,6 +4,9 @@ use avian2d::prelude::*;
 use bevy::prelude::ops::log10;
 use bevy::prelude::*;
 
+const IMPULSE_SCALING: f32 = 3_000_000.0;
+const EXPLOSION_RADIUS: f32 = 120.0;
+
 #[derive(Event, Debug, Clone)]
 pub struct BombSpawn(pub Vec<Vec2>);
 
@@ -39,35 +42,26 @@ fn on_bomb_collision(
 ) {
     let target = trigger.target();
 
-    let r = 100.0;
-
-    // Shape properties
     if let Ok(origin) = bomb_query.get(target) {
-        let shape = Collider::circle(r);
+        let shape = Collider::circle(EXPLOSION_RADIUS);
         let rotation = 0.0;
         let direction = Dir2::X;
-
-        // Configuration for the shape cast
         let config = ShapeCastConfig::from_max_distance(0.0);
         let filter = SpatialQueryFilter::default();
 
-        // Cast shape and get up to 20 hits
         let hits = spatial_query.shape_hits(
             &shape,
             origin.translation.truncate(),
             rotation,
             direction,
-            100,
+            100,  // 100 should be enough for this game
             &config,
             &filter,
         );
 
-        // Print hits
         for hit in hits.iter() {
-            info!("Hit: {:?}", hit);
-
             if let Ok((t, mut ei)) = target_query.get_mut(hit.entity) {
-                let imp = calculate_impulse(origin, t, r) * 5_000_000.0;
+                let imp = calculate_impulse_2d(origin, t, EXPLOSION_RADIUS) * IMPULSE_SCALING;
                 ei.apply_impulse(imp);
             }
         }
@@ -75,41 +69,28 @@ fn on_bomb_collision(
     commands.entity(target).despawn();
 }
 
-fn calculate_impulse(o: &Transform, t: &Transform, radius: f32) -> Vec2 {
-    info!("origin={o:?}, t={t:?}");
+fn calculate_impulse_2d(origin: &Transform, target: &Transform, radius: f32) -> Vec2 {
+    // Calculate the impulse to apply to the target based on the distance from the explosion origin
+    // and the maximum radius of the explosion.
 
-    let v = (t.translation - o.translation).truncate();
-    info!("v1={v:?}");
+    // The impulse direction is from the origin to the target.
+    // The impulse magnitude is inversely proportional to the distance
+    // from the origin to the target, clamped to a maximum value.
+    let origin_to_target = (target.translation - origin.translation).truncate();
 
-    let v = v / radius;
-    let v = v.clamp_length_min(0.0);
-    let v = v.clamp_length_max(1.0);
-    //let d = v.length();
+    // Scale the vector by the radius of the explosion, and clamp its magnitude to [0, 1]
+    let v = (origin_to_target / radius).clamp_length_min(0.0).clamp_length_max(1.0);
 
-    // when |v| == 1, we want 0 force
-    // when |v| == 0, we want max force
-    let v_norm = v.normalize();
-    let v = v_norm - v;
+    // Calculate t in [0, 1] representing how far the target is from the edge of the explosion
+    let t = v.length();
 
-    //info!("v={v:?}, d={d:?}");
-    info!("v2={v:?}");
+    // When t == 0, we want max force (f = 1), falling away to zero force at t == 1 (f = 0)
+    let f = 1.0 - t;
 
-    let d = 0.5 * log10(1.0 - v.length()) + 1.0;
-    info!("d={d:?}");
+    // Apply a logarithmic falloff to the impulse magnitude, for a more natural feel
+    // https://www.desmos.com/calculator/bd8bzvmi1w
+    let f = 0.5 * log10(f + 0.01) + 1.0;
 
-    v * d
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_calculate_impulse() {
-        dbg!(calculate_impulse(
-            &Transform::from_translation(Vec3::new(0.0, 0.0, 0.0)),
-            &Transform::from_translation(Vec3::new(1.0, 1.0, 0.0)),
-            1.0
-        ));
-    }
+    // Return a vector in the direction of v with magnitude f
+    v.normalize() * f
 }

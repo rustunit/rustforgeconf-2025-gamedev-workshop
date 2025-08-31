@@ -45,6 +45,12 @@ fn setup(mut commands: Commands, assets: Res<GameAssets>) {
         Vec2::new(500., -50.),
         Vec2::new(500., -10.),
         Vec2::new(500., 30.),
+
+        // Bomb demo
+        Vec2::new(-550., -130.),
+        Vec2::new(-550., -90.),
+        Vec2::new(-550., -50.),
+        Vec2::new(-550., -10.),
     ];
 
     let piggies = vec![
@@ -56,6 +62,8 @@ fn setup(mut commands: Commands, assets: Res<GameAssets>) {
 
     let bombs = vec![
         Vec2::new(300.0, -130.0),
+        Vec2::new(-400.0, -130.0),
+        Vec2::new(-500.0, -130.0),
     ];
 
     for b in boxes {

@@ -15,6 +15,9 @@ pub struct GameAssets {
     #[asset(path = "alienPink_square.png")]
     pub piggy: Handle<Image>,
 
+    #[asset(path = "bomb.png")]
+    pub bomb: Handle<Image>,
+
     #[asset(path = "elementWood022.png")]
     pub kiste: Handle<Image>,
 
